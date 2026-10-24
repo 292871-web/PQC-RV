@@ -35,7 +35,9 @@ flowchart TD
 ## 🗺️ Detailed Action Plan (Step-by-Step)
 
 ### Phase 1: Foundations & Environment (Crucial Start)
+
 Before writing a single line of Verilog, you need the tools to test it.
+
 - [ ] **Toolchain Installation:** Download and build the `riscv-gnu-toolchain` (configured for `rv32i_zbb_zca_zicsr_zmmul`).
 - [ ] **RTL Simulator:** Install Verilator (for fast C++ simulation) or Icarus Verilog.
 - [ ] **Test Environment:** Install Python and the `cocotb` library.
@@ -45,6 +47,7 @@ Before writing a single line of Verilog, you need the tools to test it.
 ---
 
 ### Phase 2: Base CPU Core (`rv32i_zmmul` + TCM + CSRs)
+
 Building the standard processor foundation without cryptography.
 
 - [ ] **I-TCM (32 KB):** Dual-port SRAM, zero-wait-state instruction fetch port.
@@ -59,6 +62,7 @@ Building the standard processor foundation without cryptography.
 ---
 
 ### Phase 2b: ISA Extensions (`zbb` + `zca`)
+
 Complete the full target ISA string before verification.
 
 - [ ] **Zbb:** Add bit-manipulation instructions (`clz`, `ctz`, `rev8`, `andn`, `orn`, `xnor`, `sext.b`, `zext.b`, `min`, `max`, etc.).
@@ -68,23 +72,25 @@ Complete the full target ISA string before verification.
 ---
 
 ### Phase 3: Base Verification (First Blood)
+
 The processor must work flawlessly before introducing any custom modifications.
 
 - [ ] **`riscv-arch-test`:** Hook up the official suite configured for `rv32i_zbb_zca_zicsr_zmmul` (exclude `div`/`rem` tests). Run to green.
-- [ ] **C ISA Reference Model:** Build (or wrap Spike) a C-based golden model. Wire it into cocotb as the comparison oracle — every cocotb test dumps the final register file and compares against the model.
+- [ ] **C ISA Reference Model:** Build (or wrap Spike) a C-based golden model. Wire it into cocotb as the comparison oracle — every cocotb test dumps the final register file and compares against the C model.
 - [ ] **Minimal C Runtime:** Write `crt0.S` (set `sp`, call `_start`), a linker script (I-TCM at `0x0000_0000`, D-TCM at `0x0800_0000`), and a bare-metal `libc` stub.
-- [ ] **Magic Value Test:** Write a C program that computes a known value and stores it to a fixed D-TCM address. The cocotb testbench reads that address and asserts the expected result. This proves the full toolchain → RTL path without any peripheral.
+- [ ] **Magic Value Test:** Write a C program that computes a known value and stores it to a fixed D-TCM address. The cocotb testbench reads that address and asserts the expected result. This proves the CPU and memory subsystem function correctly.
 - [ ] **Branch & Load/Store Debug:** Targeted cocotb tests for taken/not-taken branches, all load/store widths, and misaligned access behavior.
 
 ---
 
 ### Phase 4: PQC Accelerator — Math Blocks
+
 Designing the custom hardware crypto modules in `rtl/pqc/`. Each block is verified in isolation against a C reference before integration.
 
 - [ ] **C PQC Reference Model:** Wrap NIST's reference ML-KEM-512 implementation in C. Generate golden test vectors (input polynomials → expected output) for cocotb comparison.
 - [ ] **Keccak-f[1600]:** Hardware block for the 24-round sponge permutation. 1600-bit state register. Verify against NIST FIPS 202 test vectors using cocotb.
 - [ ] **NTT 4-Slot SRAM:** 4 KB tightly-coupled SRAM inside the accelerator, organized as 4 × 256-word polynomial slots.
-- [ ] **Butterfly Unit (Dual-Prime):** Modular multiply-add unit with a **48-bit datapath** supporting both q = 3329 (ML-KEM) and q = 8380417 (ML-DSA). Two twiddle-factor ROMs (or reconfigurable). Target: ≤ 256 cycles for q=3329, ≤ 400 cycles for q=8380417.
+- [ ] **Butterfly Unit (Dual-Prime):** Modular multiply-add unit with a **48-bit datapath** supporting both q = 3329 (ML-KEM) and q = 8380417 (ML-DSA). Two twiddle-factor ROMs (or reconfigurable). Target arithmetic precision and modular reduction must be verified before phase integration.
 - [ ] **iNTT:** Inverse NTT using the same butterfly unit with pre-computed inverse twiddles.
 - [ ] **Pointwise Multiply Unit:** Element-wise multiply mod q of two polynomial slots (256 × 48-bit multiplies, pipelined).
 - [ ] **Polynomial Add/Sub Unit:** Element-wise add and subtract mod q in the time domain.
@@ -93,6 +99,7 @@ Designing the custom hardware crypto modules in `rtl/pqc/`. Each block is verifi
 ---
 
 ### Phase 5: PQC Accelerator — FSM & Custom Opcodes
+
 The controller that orchestrates the math blocks into the INIT → LOAD → COMPUTE → EXTRACT lifecycle.
 
 - [ ] **FSM Design:** State machine managing: `IDLE`, `INIT`, `LOAD_BLK`, `COMPUTE_NTT`, `COMPUTE_INTT`, `COMPUTE_PMUL`, `COMPUTE_ADD`, `COMPUTE_SUB`, `STORE_BLK`, `BUSY`.
@@ -104,6 +111,7 @@ The controller that orchestrates the math blocks into the INIT → LOAD → COMP
 ---
 
 ### Phase 6a: SoC Integration — CPU Side
+
 Bridging the standard CPU with the PQC accelerator.
 
 - [ ] **Custom-0 Decode:** Add `0x0B` opcode recognition in the ID stage. Route `rs1`, `rs2`, `rd`, `funct3`, `funct7` to the `Xpqc` control interface.
@@ -115,6 +123,7 @@ Bridging the standard CPU with the PQC accelerator.
 ---
 
 ### Phase 6b: SoC Integration — Bus & Peripherals
+
 The full SoC with external interfaces.
 
 - [ ] **Wishbone Bus (32-bit):** Single-master arbiter. CPU is the only master. Peripherals at `0x1000_0000+`.
@@ -130,6 +139,7 @@ The full SoC with external interfaces.
 ---
 
 ### Phase 7: Firmware (C Software)
+
 Controlling the hardware from C.
 
 - [ ] **`.insn` Macros:** Define C macros in `firmware/pqc_custom_op.h` wrapping the Custom-0 encodings for every `Xpqc` instruction.
@@ -140,6 +150,7 @@ Controlling the hardware from C.
 ---
 
 ### Phase 8: Performance Tuning (Sub-20k Cycles)
+
 - [ ] **Cycle Measurement:** Read `mcycle` CSR before/after the KEM operation. Log per-phase breakdown (NTT, iNTT, pmul, Keccak, load/store, control).
 - [ ] **Bottleneck Analysis:** Identify top-3 cycle consumers. Common suspects: block load/store throughput, NTT stall duration, Keccak absorb instruction count.
 - [ ] **Optimization Passes:**
@@ -152,6 +163,7 @@ Controlling the hardware from C.
 ---
 
 ### Phase 9: FPGA Bring-Up (Optional / Post-Silicon)
+
 - [ ] Synthesize with Yosys + nextpnr (iCE40 or Artix-7).
 - [ ] Generate bitstream, flash to target board.
 - [ ] Run the same cocotb test suite via `riscv-fesim` or a custom JTAG-to-Wishbone bridge.
