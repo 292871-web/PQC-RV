@@ -1,4 +1,4 @@
-Copyright (c) [2026] [Paweł Gralak / PQC-RV]
+Copyright (c) 2026 Paweł Gralak / PQC-RV
 
 # PolyForm Small Business License 1.0.0
 
