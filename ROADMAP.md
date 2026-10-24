@@ -6,28 +6,26 @@ The following roadmap uses standard Mermaid.js (natively supported by GitHub in 
 
 ```mermaid
 flowchart TD
-    %% Style Definitions
     classDef environment fill:#2d3436,stroke:#b2bec3,stroke-width:2px,color:#dfe6e9;
     classDef cpu fill:#0984e3,stroke:#74b9ff,stroke-width:2px,color:#fff;
     classDef crypto fill:#d63031,stroke:#ff7675,stroke-width:2px,color:#fff;
     classDef software fill:#00b894,stroke:#55efc4,stroke-width:2px,color:#fff;
 
-    %% Nodes
-    Start((Start)) --> Env[1. Environment & Toolchain Setup]:::environment
-    Env --> CPU_Core[2. RTL: Base RV32 Core + TCM + CSRs]:::cpu
-    CPU_Core --> CPU_Ext[2b. Add Zbb + Zca]:::cpu
-    CPU_Ext --> CPU_Verif[3. Base Verification + C Ref Model]:::cpu
+    Start((Start)) --> Env[Environment Setup]:::environment
+    Env --> CPU_Core[Base RV32 Core]:::cpu
+    CPU_Core --> CPU_Ext[Add Zbb and Zca]:::cpu
+    CPU_Ext --> CPU_Verif[Base Verification]:::cpu
 
-    CPU_Verif --> PQC_Math[4. RTL: PQC Math Blocks (Dual-Prime)]:::crypto
-    PQC_Math --> PQC_State[5. RTL: FSM & Custom Opcodes]:::crypto
+    CPU_Verif --> PQC_Math[RTL PQC Math]:::crypto
+    PQC_Math --> PQC_State[RTL FSM and Opcodes]:::crypto
 
-    PQC_State --> SoC_CPU[6a. SoC: Custom-0 Decode + Stall]:::cpu
-    SoC_CPU --> SoC_Bus[6b. SoC: Wishbone + Peripherals + Boot ROM]:::cpu
-    SoC_Bus --> FW[7. Firmware: C Macros & Drivers]:::software
+    PQC_State --> SoC_CPU[SoC CPU Integration]:::cpu
+    SoC_CPU --> SoC_Bus[SoC Bus and Peripherals]:::cpu
+    SoC_Bus --> FW[Firmware and Drivers]:::software
 
-    FW --> KEM[8. ML-KEM-512 Implementation]:::software
-    KEM --> Bench[9. Cycle Profiling <= 20k]:::software
-    Bench --> TapeOut((End / FPGA))
+    FW --> KEM[ML-KEM-512]:::software
+    KEM --> Bench[Cycle Profiling]:::software
+    Bench --> TapeOut((End FPGA))
 ```
 
 ---
