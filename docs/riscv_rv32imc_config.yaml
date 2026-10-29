@@ -11,8 +11,8 @@
 #   extension catalogue        — 211 entries
 
 
-vendor: ""   # Optional — your organization name (e.g. "SiFive", "Qualcomm")
-device: ""   # Optional — your core/chip name  (e.g. "U74", "Oryon")
+vendor: ""   
+device: "PQC-RV"
 
 base_isa: RV32I   # Base ISA only (e.g. RV64I, RV32E)
 isa_string: RV32IMC_Zbb_Zca_Zicsr_Zmmul   # Full ISA descriptor (base + all selected extensions)

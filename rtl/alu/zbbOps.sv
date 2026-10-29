@@ -40,3 +40,6 @@ module CPOP(input logic [31:0] A, output logic [31:0] Y);
     //TODO: implement CPOP logic
 endmodule
 
+module ORCb();
+    //TODO: implement ORCb logic
+endmodule
